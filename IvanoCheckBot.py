@@ -3,7 +3,7 @@ import requests
 from currency_sharaf import get_rates_from_sharaf
 
 
-bot = telebot.TeleBot("7847201576:AAEYASQu4Sp3XFf0uhzFDd4NkK_3Jv5hi58", parse_mode=None)
+bot = telebot.TeleBot("", parse_mode=None)
 
 markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 
