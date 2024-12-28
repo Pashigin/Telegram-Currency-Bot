@@ -7,8 +7,8 @@ bot = telebot.TeleBot("7847201576:AAEYASQu4Sp3XFf0uhzFDd4NkK_3Jv5hi58", parse_mo
 
 markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 
-markup.add(telebot.types.KeyboardButton("Проверить оф. курс доллара"))
-markup.add(telebot.types.KeyboardButton("Проверить оф. курс евро"))
+markup.add(telebot.types.KeyboardButton("Проверить оф. курс USD"))
+markup.add(telebot.types.KeyboardButton("Проверить оф. курс EUR"))
 markup.add(telebot.types.KeyboardButton("Проверить курс в Sharaf Exchange"))
 
 
@@ -21,10 +21,9 @@ def send_welcome(message):
     )
 
 
-@bot.message_handler(func=lambda message: message.text == "Проверить оф. курс доллара")
+@bot.message_handler(func=lambda message: message.text == "Проверить оф. курс USD")
 def check_usd_currency(message):
     try:
-        # Используем API для получения курса
         response = requests.get("https://open.er-api.com/v6/latest/USD")
         data = response.json()
         aed_rate = data["rates"]["AED"]
@@ -33,10 +32,9 @@ def check_usd_currency(message):
         bot.send_message(message.chat.id, f"Ошибка при получении курса: {e}")
 
 
-@bot.message_handler(func=lambda message: message.text == "Проверить оф. курс евро")
+@bot.message_handler(func=lambda message: message.text == "Проверить оф. курс EUR")
 def check_eur_currency(message):
     try:
-        # Используем API для получения курса
         response = requests.get("https://open.er-api.com/v6/latest/EUR")
         data = response.json()
         aed_rate = data["rates"]["AED"]
@@ -74,14 +72,6 @@ def check_currency_sharaf(message):
             bot.send_message(message.chat.id, "Не удалось получить курс валют.")
     except Exception as e:
         bot.send_message(message.chat.id, f"Ошибка при получении курса: {e}")
-
-
-@bot.message_handler(func=lambda message: message.text == "Ну ты и пиздабол")
-def bad_message(message):
-    bot.reply_to(
-        message,
-        text="Кто бы говорил, нахуй послан",
-    )
 
 
 @bot.message_handler(func=lambda message: True)
