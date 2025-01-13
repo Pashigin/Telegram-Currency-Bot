@@ -9,16 +9,30 @@ load_dotenv()
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 if TELEGRAM_TOKEN is None:
-    raise ValueError("TELEGRAM_TOKEN не должен быть None")
+    raise ValueError("TELEGRAM_TOKEN can not be None")
 
 # Инициализация бота
 bot = telebot.TeleBot(TELEGRAM_TOKEN, parse_mode=None)
 
+
 # Создание клавиатуры
-markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-markup.add(telebot.types.KeyboardButton("Проверить оф. курс USD"))
-markup.add(telebot.types.KeyboardButton("Проверить оф. курс EUR"))
-markup.add(telebot.types.KeyboardButton("Проверить курс в Sharaf Exchange"))
+def create_markup():
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add(telebot.types.KeyboardButton("Проверить оф. курс USD"))
+    markup.add(telebot.types.KeyboardButton("Проверить оф. курс EUR"))
+    markup.add(telebot.types.KeyboardButton("Проверить курс в Sharaf Exchange"))
+    return markup
+
+
+# Функция для получения курса валют из API
+def get_exchange_rate(currency_code: str):
+    try:
+        response = requests.get(f"https://open.er-api.com/v6/latest/{currency_code}")
+        data = response.json()
+        return data["rates"]["AED"]
+    except Exception as e:
+        print(f"error getting the rate for {currency_code}: {e}")
+        return None
 
 
 # Обработчик команд /start и /help
@@ -27,32 +41,28 @@ def send_welcome(message):
     bot.send_message(
         message.chat.id,
         "Здравствуйте! Я бот, который проверяет курс валют ОАЭ. Если хотите проверить, нажмите на любую кнопку ниже.",
-        reply_markup=markup,
+        reply_markup=create_markup(),
     )
 
 
 # Проверка курса валюты USD
 @bot.message_handler(func=lambda message: message.text == "Проверить оф. курс USD")
 def check_usd_currency(message):
-    try:
-        response = requests.get("https://open.er-api.com/v6/latest/USD")
-        data = response.json()
-        aed_rate = data["rates"]["AED"]
+    aed_rate = get_exchange_rate("USD")
+    if aed_rate:
         bot.send_message(message.chat.id, f"Текущий курс: 1 USD = {aed_rate} AED")
-    except Exception as e:
-        bot.send_message(message.chat.id, f"Ошибка при получении курса: {e}")
+    else:
+        bot.send_message(message.chat.id, "Ошибка при получении курса USD.")
 
 
 # Проверка курса валюты EUR
 @bot.message_handler(func=lambda message: message.text == "Проверить оф. курс EUR")
 def check_eur_currency(message):
-    try:
-        response = requests.get("https://open.er-api.com/v6/latest/EUR")
-        data = response.json()
-        aed_rate = data["rates"]["AED"]
+    aed_rate = get_exchange_rate("EUR")
+    if aed_rate:
         bot.send_message(message.chat.id, f"Текущий курс: 1 EUR = {aed_rate} AED")
-    except Exception as e:
-        bot.send_message(message.chat.id, f"Ошибка при получении курса: {e}")
+    else:
+        bot.send_message(message.chat.id, "Ошибка при получении курса EUR.")
 
 
 # Проверка курса валюты USD и EUR в Sharaf Exchange
@@ -60,14 +70,15 @@ def check_eur_currency(message):
     func=lambda message: message.text == "Проверить курс в Sharaf Exchange"
 )
 def check_currency_sharaf(message):
-    # Получаем курсы валют
-    rates: dict[str, tuple[float, float]] = get_rates_from_sharaf()
+    rates = get_rates_from_sharaf()
 
-    usd_rate = rates.get("USD")  # Получаем курс USD
-    eur_rate = rates.get("EUR")  # Получаем курс EUR
+    usd_rate = rates.get("USD")
+    eur_rate = rates.get("EUR")
 
     if usd_rate is None or eur_rate is None:
-        bot.send_message(message.chat.id, "Не удалось получить курс валют.")
+        bot.send_message(
+            message.chat.id, "Не удалось получить курс валют. (ошибка в программе)"
+        )
     else:
         bot.send_message(
             chat_id=message.chat.id,
@@ -91,4 +102,5 @@ def echo_all(message):
     )
 
 
+# Запуск бота
 bot.infinity_polling()
