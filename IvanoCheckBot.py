@@ -1,17 +1,27 @@
 import telebot
 import requests
+import os
+from dotenv import load_dotenv
 from currency_sharaf import get_rates_from_sharaf
 
+# Загружаем переменные окружения из файла .env
+load_dotenv()
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
-bot = telebot.TeleBot("", parse_mode=None)
+if TELEGRAM_TOKEN is None:
+    raise ValueError("TELEGRAM_TOKEN не должен быть None")
 
+# Инициализация бота
+bot = telebot.TeleBot(TELEGRAM_TOKEN, parse_mode=None)
+
+# Создание клавиатуры
 markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-
 markup.add(telebot.types.KeyboardButton("Проверить оф. курс USD"))
 markup.add(telebot.types.KeyboardButton("Проверить оф. курс EUR"))
 markup.add(telebot.types.KeyboardButton("Проверить курс в Sharaf Exchange"))
 
 
+# Обработчик команд /start и /help
 @bot.message_handler(commands=["start", "help"])
 def send_welcome(message):
     bot.send_message(
@@ -21,6 +31,7 @@ def send_welcome(message):
     )
 
 
+# Проверка курса валюты USD
 @bot.message_handler(func=lambda message: message.text == "Проверить оф. курс USD")
 def check_usd_currency(message):
     try:
@@ -32,6 +43,7 @@ def check_usd_currency(message):
         bot.send_message(message.chat.id, f"Ошибка при получении курса: {e}")
 
 
+# Проверка курса валюты EUR
 @bot.message_handler(func=lambda message: message.text == "Проверить оф. курс EUR")
 def check_eur_currency(message):
     try:
@@ -43,37 +55,34 @@ def check_eur_currency(message):
         bot.send_message(message.chat.id, f"Ошибка при получении курса: {e}")
 
 
+# Проверка курса валюты USD и EUR в Sharaf Exchange
 @bot.message_handler(
     func=lambda message: message.text == "Проверить курс в Sharaf Exchange"
 )
 def check_currency_sharaf(message):
-    try:
-        rates = get_rates_from_sharaf()  # Получаем курс валют
-        if isinstance(rates, dict):
-            usd_rate = rates.get(
-                "USD", ("Нет данных", "Нет данных")
-            )  # Получаем курс USD
-            eur_rate = rates.get(
-                "EUR", ("Нет данных", "Нет данных")
-            )  # Получаем курс EUR
+    # Получаем курсы валют
+    rates: dict[str, tuple[float, float]] = get_rates_from_sharaf()
 
-            bot.send_message(
-                chat_id=message.chat.id,
-                text=(
-                    "Покупают:\n"
-                    f"1 USD = {usd_rate[0]} AED\n"
-                    f"1 EUR = {eur_rate[0]} AED\n\n"
-                    "Продают:\n"
-                    f"1 USD = {usd_rate[1]} AED\n"
-                    f"1 EUR = {eur_rate[1]} AED"
-                ),
-            )
-        else:
-            bot.send_message(message.chat.id, "Не удалось получить курс валют.")
-    except Exception as e:
-        bot.send_message(message.chat.id, f"Ошибка при получении курса: {e}")
+    usd_rate = rates.get("USD")  # Получаем курс USD
+    eur_rate = rates.get("EUR")  # Получаем курс EUR
+
+    if usd_rate is None or eur_rate is None:
+        bot.send_message(message.chat.id, "Не удалось получить курс валют.")
+    else:
+        bot.send_message(
+            chat_id=message.chat.id,
+            text=(
+                "Покупают:\n"
+                f"1 USD = {usd_rate[0]:.6f} AED\n"
+                f"1 EUR = {eur_rate[0]:.6f} AED\n\n"
+                "Продают:\n"
+                f"1 USD = {usd_rate[1]:.6f} AED\n"
+                f"1 EUR = {eur_rate[1]:.6f} AED"
+            ),
+        )
 
 
+# Обработчик всех остальных сообщений
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
     bot.send_message(
