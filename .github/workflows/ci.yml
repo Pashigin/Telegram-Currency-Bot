@@ -28,11 +28,22 @@ jobs:
       # Шаг 3: Собираем Docker образ
       - name: Build Docker image
         run: |
-          docker build -t my-bot-image .  # Собираем образ с тегом my-bot-image
+          docker build -t my-bot-image:${GITHUB_SHA} .  # Собираем образ с уникальным тегом
 
-      # Шаг 4: Запускаем Docker контейнер с переданными переменными окружения
+      # Шаг 4: Остановка и удаление старого контейнера
+      - name: Stop and remove old Docker container
+        run: |
+          docker stop my-bot-container || true  # Останавливаем контейнер
+          docker rm my-bot-container || true    # Удаляем контейнер
+
+      # Шаг 5: Запуск нового Docker контейнера с переданными переменными окружения
       - name: Run Docker container
         run: |
           docker run -d --name my-bot-container \
             --env TELEGRAM_TOKEN=$TELEGRAM_TOKEN \
-            my-bot-image  # Запускаем контейнер с переданным TELEGRAM_TOKEN
+            my-bot-image:${GITHUB_SHA}  # Запускаем контейнер с новым образом
+
+      # Шаг 6: Очистка неиспользуемых Docker образов
+      - name: Clean up unused Docker images
+        run: |
+          docker image prune -af  # Удаляем все неиспользуемые образы
