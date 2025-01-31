@@ -1,0 +1,38 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main  # или твоя основная ветка
+  pull_request:
+    branches:
+      - main  # Запускается при создании PR в основную ветку
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux]  # Используем self-hosted runner для вашего сервера
+
+    steps:
+      # Шаг 1: Клонирование репозитория
+      - name: Checkout code
+        uses: actions/checkout@v2  # Клонируем репозиторий для доступа к последнему коду
+
+      # Шаг 2: Установка переменных окружения из GitHub Secrets
+      - name: Set environment variables from GitHub secrets
+        run: |
+          echo "TELEGRAM_TOKEN=${{ secrets.TELEGRAM_TOKEN }}" >> $GITHUB_ENV
+        shell: bash
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+      
+      # Шаг 3: Собираем Docker образ
+      - name: Build Docker image
+        run: |
+          docker build -t my-bot-image .  # Собираем образ с тегом my-bot-image
+
+      # Шаг 4: Запускаем Docker контейнер с переданными переменными окружения
+      - name: Run Docker container
+        run: |
+          docker run -d --name my-bot-container \
+            --env TELEGRAM_TOKEN=$TELEGRAM_TOKEN \
+            my-bot-image  # Запускаем контейнер с переданным TELEGRAM_TOKEN

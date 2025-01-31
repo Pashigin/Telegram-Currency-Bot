@@ -51,9 +51,9 @@ def get_rates_from_sharaf() -> dict[str, tuple[float, float]]:
 def get_currency_data(locator) -> tuple[float, float]:
     # Извлечение данных о покупке и продаже валют
     buy = float(
-        locator.locator(".RatesDesktopView_fc_buy__62GgA").text_content().strip()
+        locator.locator("div[class^='RatesDesktopView_fc_buy']").text_content().strip()
     )
     sell = float(
-        locator.locator(".RatesDesktopView_fc_cell__jVUpz").text_content().strip()
+        locator.locator("div[class^='RatesDesktopView_fc_cell']").text_content().strip()
     )
     return buy, sell
