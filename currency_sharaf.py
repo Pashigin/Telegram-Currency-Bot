@@ -1,35 +1,36 @@
-from playwright.sync_api import sync_playwright, TimeoutError
+from playwright.async_api import async_playwright, TimeoutError
+import asyncio
 
 
-def get_rates_from_sharaf() -> dict[str, tuple[float, float]]:
+async def get_rates_from_sharaf() -> dict[str, tuple[float, float]]:
     rates = {}  # Словарь для курсов валют
 
-    with sync_playwright() as p:
+    async with async_playwright() as p:
         # Запуск браузера Chromium
-        browser = p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(headless=True)
 
         # Создание новой страницы
-        page = browser.new_page()
+        page = await browser.new_page()
 
         try:
             # Переход на сайт и ожидание загрузки элементов
-            page.goto("https://www.sharafexchange.ae/services/currency-exchange")
+            await page.goto("https://www.sharafexchange.ae/services/currency-exchange")
 
-            # Ожидание появления элементов с курсами валют
-            page.wait_for_selector(
-                'li:has-text("USD - UNITED STATES OF AMERICA")', timeout=30000
+            # Параллельное ожидание появления элементов
+            await asyncio.gather(
+                page.wait_for_selector(
+                    'li:has-text("USD - UNITED STATES OF AMERICA")', timeout=30000
+                ),
+                page.wait_for_selector(
+                    'li:has-text("EUR - EUROPEAN UNION")', timeout=30000
+                ),
             )
-            page.wait_for_selector('li:has-text("EUR - EUROPEAN UNION")', timeout=30000)
 
             # Извлечение курсов валют
-            usd_data = page.locator('li:has-text("USD - UNITED STATES OF AMERICA")')
-            eur_data = page.locator('li:has-text("EUR - EUROPEAN UNION")')
-
-            if usd_data.count() == 0 or eur_data.count() == 0:
-                raise ValueError("Could not find currency elements.")
-
-            usd_buy, usd_sell = get_currency_data(usd_data)
-            eur_buy, eur_sell = get_currency_data(eur_data)
+            usd_buy, usd_sell = await get_currency_data(
+                page, "USD - UNITED STATES OF AMERICA"
+            )
+            eur_buy, eur_sell = await get_currency_data(page, "EUR - EUROPEAN UNION")
 
             # Заполнение словаря курсов валют
             rates = {
@@ -43,17 +44,20 @@ def get_rates_from_sharaf() -> dict[str, tuple[float, float]]:
             print(f"An error occurred: {e}")
         finally:
             # Закрытие браузера
-            browser.close()
+            await browser.close()
 
     return rates
 
 
-def get_currency_data(locator) -> tuple[float, float]:
-    # Извлечение данных о покупке и продаже валют
+async def get_currency_data(page, currency_name: str) -> tuple[float, float]:
+    # Ожидание появления данных о валюте и извлечение
+    locator = page.locator(f'li:has-text("{currency_name}")')
+
     buy = float(
-        locator.locator("div[class^='RatesDesktopView_fc_buy']").text_content().strip()
+        await locator.locator("div[class^='RatesDesktopView_fc_buy']").text_content()
     )
     sell = float(
-        locator.locator("div[class^='RatesDesktopView_fc_cell']").text_content().strip()
+        await locator.locator("div[class^='RatesDesktopView_fc_cell']").text_content()
     )
+
     return buy, sell
