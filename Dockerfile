@@ -3,7 +3,7 @@ FROM python:3.12-slim
 
 # Установка Playwright и Chromium
 RUN pip install --no-cache-dir playwright \
-    && install --with-deps --only-shell chromium
+    && playwright install --with-deps --only-shell chromium  
 
 # Создание рабочей директории
 WORKDIR /app
