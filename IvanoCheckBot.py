@@ -35,7 +35,12 @@ def create_markup():
 async def send_welcome(message):
     await bot.send_message(
         message.chat.id,
-        "Здравствуйте! Я бот, который проверяет курс валют ОАЭ. Если хотите проверить, нажмите на любую кнопку ниже.",
+        """Здравствуйте! Я бот, который проверяет и показывает курс Дирхама ОАЭ.
+        Курсы валют взяты из официального источника и обменника Sharaf Exchange.
+        <link>https://sharafexchange.ae/</link>
+        Пока реализованы только курс AED к USD и EUR.
+        Если хотите проверить, нажмите на любую кнопку ниже.""",
+        parse_mode="HTML",
         reply_markup=create_markup(),
     )
 
@@ -48,19 +53,19 @@ async def check_usd_currency(message):
 
 
 # Проверка курса валюты EUR
-@bot.message_handler(func=lambda message: message.text == "Оф. курс USD/EUR")
+@bot.message_handler(func=lambda message: message.text == "Оф. курс EUR/AED")
 async def check_eur_currency(message):
     result = await check_official_currency("EUR")
     await bot.send_message(message.chat.id, result, parse_mode="HTML")
 
 
-@bot.message_handler(func=lambda message: message.text == "Sharaf Exchange USD/AED")
+@bot.message_handler(func=lambda message: message.text == "Курс обменника USD/AED")
 async def check_usd_currency_sharaf(message):
     result = await check_currency_sharaf("USD")
     await bot.send_message(message.chat.id, result, parse_mode="HTML")
 
 
-@bot.message_handler(func=lambda message: message.text == "Sharaf Exchange USD/EUR")
+@bot.message_handler(func=lambda message: message.text == "Курс обменника USD/EUR")
 async def check_eur_currency_sharaf(message):
     result = await check_currency_sharaf("EUR")
     await bot.send_message(message.chat.id, result, parse_mode="HTML")

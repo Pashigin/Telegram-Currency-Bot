@@ -44,7 +44,7 @@ async def check_official_currency(currency_code):
     rate = await get_official_rate(currency_code)
     if rate:
         message = (
-            f"📊 <b>Официальный курс валют к AED</b>:\n\n"
+            f"📊 <b>Официальный курс к AED</b>:\n\n"
             f"<i>1 {currency_code} = {rate:.4f} AED</i>"
         )
         return message
