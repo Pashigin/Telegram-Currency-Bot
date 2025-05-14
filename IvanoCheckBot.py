@@ -11,7 +11,7 @@ load_dotenv()
 
 api_url = os.getenv("OFFICIAL_API_URL")
 sharaf_api_url = os.getenv("SHARAF_API_URL")
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN_TEST2")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 if TELEGRAM_TOKEN is None:
     raise ValueError("TELEGRAM_TOKEN can not be None")
