@@ -47,6 +47,7 @@ jobs:
             --env TELEGRAM_TOKEN=$TELEGRAM_TOKEN \
             --env OFFICIAL_API_URL=$OFFICIAL_API_URL \
             --env SHARAF_API_URL=$SHARAF_API_URL \
+            --restart unless-stopped \
             my-bot-image:${GITHUB_SHA}
 
       # Шаг 6: Очистка неиспользуемых Docker образов
