@@ -1,0 +1,55 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main  # или твоя основная ветка
+  pull_request:
+    branches:
+      - main  # Запускается при создании PR в основную ветку
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux]  # Используем self-hosted runner для вашего сервера
+
+    steps:
+      # Шаг 1: Клонирование репозитория
+      - name: Checkout code
+        uses: actions/checkout@v2  # Клонируем репозиторий для доступа к последнему коду
+
+      # Шаг 2: Установка переменных окружения из GitHub Secrets и Variables
+      - name: Set environment variables
+        run: |
+          echo "TELEGRAM_TOKEN=${{ secrets.TELEGRAM_TOKEN }}" >> $GITHUB_ENV
+          echo "OFFICIAL_API_URL=${{ vars.OFFICIAL_API_URL }}" >> $GITHUB_ENV
+          echo "SHARAF_API_URL=${{ vars.SHARAF_API_URL }}" >> $GITHUB_ENV
+        shell: bash
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          OFFICIAL_API_URL: ${{ vars.OFFICIAL_API_URL }}
+          SHARAF_API_URL: ${{ vars.SHARAF_API_URL }}
+      
+      # Шаг 3: Собираем Docker образ
+      - name: Build Docker image
+        run: |
+          docker build -t my-bot-image:${GITHUB_SHA} .  # Собираем образ с уникальным тегом
+
+      # Шаг 4: Остановка и удаление старого контейнера
+      - name: Stop and remove old Docker container
+        run: |
+          docker stop my-bot-container || true  # Останавливаем контейнер
+          docker rm my-bot-container || true    # Удаляем контейнер
+
+      # Шаг 5: Запуск нового Docker контейнера с переменными окружения
+      - name: Run Docker container
+        run: |
+          docker run -d --name my-bot-container \
+            --env TELEGRAM_TOKEN=$TELEGRAM_TOKEN \
+            --env OFFICIAL_API_URL=$OFFICIAL_API_URL \
+            --env SHARAF_API_URL=$SHARAF_API_URL \
+            my-bot-image:${GITHUB_SHA}
+
+      # Шаг 6: Очистка неиспользуемых Docker образов
+      - name: Clean up unused Docker images
+        run: |
+          docker image prune -af  # Удаляем все неиспользуемые образы
