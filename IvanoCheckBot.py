@@ -11,7 +11,7 @@ load_dotenv()
 
 api_url = os.getenv("OFFICIAL_API_URL")
 sharaf_api_url = os.getenv("SHARAF_API_URL")
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN_TEST2")
 
 if TELEGRAM_TOKEN is None:
     raise ValueError("TELEGRAM_TOKEN can not be None")
@@ -25,8 +25,8 @@ def create_markup():
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add(telebot.types.KeyboardButton("Оф. курс USD/AED"))
     markup.add(telebot.types.KeyboardButton("Оф. курс EUR/AED"))
-    markup.add(telebot.types.KeyboardButton("Sharaf Exchange USD/AED"))
-    markup.add(telebot.types.KeyboardButton("Sharaf Exchange USD/AED"))
+    markup.add(telebot.types.KeyboardButton("Курс обменника USD/AED"))
+    markup.add(telebot.types.KeyboardButton("Курс обменника EUR/AED"))
     return markup
 
 
@@ -35,12 +35,15 @@ def create_markup():
 async def send_welcome(message):
     await bot.send_message(
         message.chat.id,
-        """Здравствуйте! Я бот, который проверяет и показывает курс Дирхама ОАЭ.
-        Курсы валют взяты из официального источника и обменника Sharaf Exchange.
-        <link>https://sharafexchange.ae/</link>
-        Пока реализованы только курс AED к USD и EUR.
-        Если хотите проверить, нажмите на любую кнопку ниже.""",
+        (
+            "Здравствуйте!\nЯ бот, который проверяет и показывает курс Дирхама ОАЭ.\n"
+            "Курсы валют взяты из официального источника и обменника <a href='https://sharafexchange.ae/'>Sharaf Exchange</a>.\n"
+            "Пока реализованы только курс AED к USD и EUR.\n"
+            "Если хотите проверить, нажмите на любую кнопку ниже 👇\n\n"
+            "Для связи @pashigin"
+        ),
         parse_mode="HTML",
+        disable_web_page_preview=True,
         reply_markup=create_markup(),
     )
 
@@ -65,7 +68,7 @@ async def check_usd_currency_sharaf(message):
     await bot.send_message(message.chat.id, result, parse_mode="HTML")
 
 
-@bot.message_handler(func=lambda message: message.text == "Курс обменника USD/EUR")
+@bot.message_handler(func=lambda message: message.text == "Курс обменника EUR/AED")
 async def check_eur_currency_sharaf(message):
     result = await check_currency_sharaf("EUR")
     await bot.send_message(message.chat.id, result, parse_mode="HTML")
